@@ -13,10 +13,15 @@ let lastVideoTime = -1;
 let blendshapes: any[] = [];
 let rotation: Euler;
 let headMesh: any[] = [];
+let isRecording = false;
+let recordedArkitBlendshapes: { [key: string]: any } = {};
+let startRecordingTime = -1;
+let endRecordingTime = -1;
+
 
 const options: FaceLandmarkerOptions = {
   baseOptions: {
-    modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
+    modelAssetPath: `./face_landmarker.task`,
     delegate: "GPU"
   },
   numFaces: 1,
@@ -58,7 +63,7 @@ function Avatar({ url }: { url: string }) {
 }
 
 function App() {
-  const [url, setUrl] = useState<string>("https://models.readyplayer.me/6460d95f9ae10f45bffb2864.glb?morphTargets=ARKit&textureAtlas=1024");
+  const [url, setUrl] = useState<string>("./Asian_business_woman_ARKit.glb");
   const { getRootProps } = useDropzone({
     onDrop: files => {
       const file = files[0];
@@ -71,12 +76,12 @@ function App() {
   });
 
   const setup = async () => {
-    const filesetResolver = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
+    const filesetResolver = await FilesetResolver.forVisionTasks("./wasm");
     faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, options);
 
     video = document.getElementById("video") as HTMLVideoElement;
     navigator.mediaDevices.getUserMedia({
-      video: { width: 1280, height: 720 },
+      video: { width: 1280, height: 720, facingMode: 'user' },
       audio: false,
     }).then(function (stream) {
       video.srcObject = stream;
@@ -95,15 +100,70 @@ function App() {
 
         const matrix = new Matrix4().fromArray(faceLandmarkerResult.facialTransformationMatrixes![0].data);
         rotation = new Euler().setFromRotationMatrix(matrix);
+        if (isRecording) {
+          if (startRecordingTime === -1) {
+            let _nowTimestamp = new Date().getTime();
+            startRecordingTime = _nowTimestamp;
+            recordedArkitBlendshapes["startTime"] = startRecordingTime;
+          }
+
+          blendshapes.forEach(element => {
+            if (element.categoryName in recordedArkitBlendshapes["blendshapes"]) {
+              recordedArkitBlendshapes["blendshapes"][element.categoryName].push(element.score);
+            } else {
+              recordedArkitBlendshapes["blendshapes"][element.categoryName] = [element.score];
+            }
+          });
+
+          recordedArkitBlendshapes["rotations"].push([rotation.x, rotation.y, rotation.z]);
+
+        } else if (!isRecording && startRecordingTime !== -1) {
+          let _nowTimestamp = new Date().getTime();
+          endRecordingTime = _nowTimestamp;
+          recordedArkitBlendshapes["endTime"] = endRecordingTime;
+          startRecordingTime = -1;
+        }
+
+
       }
     }
 
     window.requestAnimationFrame(predict);
   }
 
-  const handleOnChange = (event: any) => {
-    setUrl(`${event.target.value}?morphTargets=ARKit&textureAtlas=1024`);
+  const handleRecordButtonClick = () => {
+    isRecording = !isRecording;
+    // blendshapes = [];
+    if (isRecording) {
+      recordedArkitBlendshapes["startTime"] = -1;
+      recordedArkitBlendshapes["endTime"] = -1;
+      recordedArkitBlendshapes["blendshapes"] = {};
+      recordedArkitBlendshapes["rotations"] = [];
+    }
+
+    if (!isRecording && recordedArkitBlendshapes["startTime"] !== -1) {
+      const button = document.getElementById("download-button") as HTMLButtonElement;
+      button.style.display = "inline-block";
+
+    }
+
+    const button = document.getElementById("record-button") as HTMLButtonElement;
+    button.innerText = isRecording ? "Recording" : "Start";
   }
+
+  const handleDownloadButtonClick = () => {
+    const blendshapesData = JSON.stringify(recordedArkitBlendshapes);
+
+    const blob = new Blob([blendshapesData], { type: 'application/json' });
+
+    const downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(blob);
+    let _nowTimestamp = new Date().getTime();
+    downloadLink.download = 'arkit-blendshapes-' + _nowTimestamp + '.json';
+
+    downloadLink.click();
+  }
+
 
   useEffect(() => {
     setup();
@@ -111,10 +171,16 @@ function App() {
 
   return (
     <div className="App">
-      <div {...getRootProps({ className: 'dropzone' })}>
-        <p>Drag & drop RPM avatar GLB file here</p>
+      <div className="controls">
+        <button id="record-button" className="record-button" onClick={handleRecordButtonClick}>
+          {isRecording ? "Recording" : "Start"}
+        </button>
+
+        <button id="download-button" className="download-button" onClick={handleDownloadButtonClick}>
+          Download
+        </button>
       </div>
-      <input className='url' type="text" placeholder="Paste RPM avatar URL" onChange={handleOnChange} />
+
       <video className='camera-feed' id="video" autoPlay></video>
       <Canvas style={{ height: 600 }} camera={{ fov: 25 }} shadows>
         <ambientLight intensity={0.5} />
