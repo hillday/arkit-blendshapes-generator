@@ -115,7 +115,7 @@ function App() {
             }
           });
 
-          recordedArkitBlendshapes["rotations"].push([rotation.x, rotation.y, rotation.z]);
+          recordedArkitBlendshapes["rotations"].push({ x: rotation.x, y: rotation.y, z: rotation.z, order: "XYZ" });
 
         } else if (!isRecording && startRecordingTime !== -1) {
           let _nowTimestamp = new Date().getTime();
