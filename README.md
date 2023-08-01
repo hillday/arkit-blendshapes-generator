@@ -67,7 +67,7 @@ ses-kafka-producer
 	]
 }
 ```
-`startTime` 为开始录制时间, `endTime`为结束时间,`blendshapes`为blendshape这段时间的值，key为blendshape的名称。`rotations` 为这段时间头部整体的Euler旋转值，选择顺序为XYZ。Unity中使用的效果如下：
+`startTime` 为开始录制时间, `endTime`为结束时间,`blendshapes`为blendshape这段时间的值，key为blendshape的名称。`rotations` 为这段时间头部整体的Euler旋转值，选择顺序为XYZ。Unity中使用的效果如下(未做旋转)：
 ![](./assets/Unity.gif)
 
 
