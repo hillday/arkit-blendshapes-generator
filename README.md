@@ -1,9 +1,9 @@
-# ARKit Face Blendshape 录制
+# ARKit Face Blendshape 及音频录制
 本项目在[React with Ready Player Me Avatars](https://github.com/srcnalt/rpm-face-tracking)基础上修改。
 
 ARKit Face Blendshapes 是苹果公司的增强现实开发工具包（ARKit）中的一个功能，用于识别和跟踪人脸表情。Blendshapes 是一组预定义的面部动画形状，可以通过检测面部特征点的变化来实现面部表情的跟踪和重建。
 
-本项目通过`mediapipe`人脸动作捕捉输出ARKit Face Blendshapes参数，并驱动Ready Player Me的角色模型进行实时效果展示，并可以录制和下载相应时间段内的Blendshapes参数,可以在Unity 等软件中制作数字人表情动画使用。点击在线[体验](https://arkit-1303089103.cos-website.ap-guangzhou.myqcloud.com/)
+本项目通过`mediapipe`人脸动作捕捉输出ARKit Face Blendshapes参数，并驱动Ready Player Me的角色模型进行实时效果展示，并可以录制和下载相应时间段内的Blendshapes参数及对应的音频,可以在Unity 等软件中制作数字人表情动画和声音使用。点击在线[体验](https://arkit-1303089103.cos-website.ap-guangzhou.myqcloud.com/)
 
 ![](./assets/Demo.gif)
 ### 上手指南
