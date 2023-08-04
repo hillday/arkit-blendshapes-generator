@@ -6,6 +6,8 @@ import { Color, Euler, Matrix4 } from 'three';
 import { Canvas, useFrame, useGraph } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import { useDropzone } from 'react-dropzone';
+import { AudioRecorder, useAudioRecorder } from 'react-audio-voice-recorder';
+
 
 let video: HTMLVideoElement;
 let faceLandmarker: FaceLandmarker;
@@ -63,6 +65,17 @@ function Avatar({ url }: { url: string }) {
 }
 
 function App() {
+  const [audioData, setAudioData] = useState<Blob>();
+  const recorderControls = useAudioRecorder(
+    {
+      noiseSuppression: true,
+      echoCancellation: true,
+    },
+    (err) => console.table(err) // onNotAllowedOrFound
+  );
+  const addAudioElement = (blob: Blob) => {
+    setAudioData(blob);
+  };
   const [url, setUrl] = useState<string>("./Asian_business_woman_ARKit.glb");
   const { getRootProps } = useDropzone({
     onDrop: files => {
@@ -149,6 +162,11 @@ function App() {
 
     const button = document.getElementById("record-button") as HTMLButtonElement;
     button.innerText = isRecording ? "Recording" : "Start";
+    if (isRecording) {
+      recorderControls.startRecording();
+    } else {
+      recorderControls.stopRecording();
+    }
   }
 
   const handleDownloadButtonClick = () => {
@@ -162,7 +180,19 @@ function App() {
     downloadLink.download = 'arkit-blendshapes-' + _nowTimestamp + '.json';
 
     downloadLink.click();
+
+    handleDownloadAudio(_nowTimestamp);
   }
+
+  const handleDownloadAudio = (time: number) => {
+    if (audioData) {
+      const url = URL.createObjectURL(audioData);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'audio-recording-' + time + '.wav';
+      link.click();
+    }
+  };
 
 
   useEffect(() => {
@@ -171,6 +201,16 @@ function App() {
 
   return (
     <div className="App">
+      <div id="record-audio">
+        <AudioRecorder
+          onRecordingComplete={(blob) => addAudioElement(blob)}
+          recorderControls={recorderControls}
+          // downloadOnSavePress={true}
+          downloadFileExtension="wav"
+          showVisualizer={true}
+        />
+      </div>
+
       <div className="controls">
         <button id="record-button" className="record-button" onClick={handleRecordButtonClick}>
           {isRecording ? "Recording" : "Start"}
